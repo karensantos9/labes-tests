@@ -1,0 +1,251 @@
+﻿
+"""QA-02: testes independentes da comparação escola x município."""
+
+import pytest
+
+from app.domain.infraestrutura import (
+    calcular_comparacao_infraestrutura_ano,
+)
+from contrato_qa import INDICADORES_ESPERADOS
+
+
+def calcular_comparacao(escola, referencias):
+    """Executa a função real do backend usando o contrato de QA."""
+
+    return calcular_comparacao_infraestrutura_ano(
+        escola,
+        referencias,
+        indicadores_esperados=INDICADORES_ESPERADOS,
+        cobertura_minima_percentual=None,
+    )
+
+
+def test_comparacao_exclui_escola_selecionada_e_filtra_referencias(
+    registro_factory,
+):
+    """Só entram na média escolas diferentes da selecionada,
+    pertencentes ao mesmo município e ao mesmo ano.
+    """
+
+    escola = registro_factory(
+        15012345,
+        [1] * 10 + [0] * 7,
+        ano=2024,
+    )
+
+    referencia_zero = registro_factory(
+        15000001,
+        [0] * 17,
+        ano=2024,
+    )
+
+    referencia_cem = registro_factory(
+        15000002,
+        [1] * 17,
+        ano=2024,
+    )
+
+    outro_municipio = registro_factory(
+        15000003,
+        [1] * 17,
+        ano=2024,
+        co_municipio=9999999,
+    )
+
+    outro_ano = registro_factory(
+        15000004,
+        [1] * 17,
+        ano=2023,
+    )
+
+    # Incluímos propositalmente a própria escola na lista.
+    # A função deve excluí-la da comparação.
+    referencias = [
+        escola,
+        referencia_zero,
+        referencia_cem,
+        outro_municipio,
+        outro_ano,
+    ]
+
+    resultado = calcular_comparacao(escola, referencias)
+
+    assert resultado.situacao == "disponivel"
+
+    assert resultado.indice_escola_percentual == 58.82
+    assert resultado.quantidade_indicadores_presentes == 10
+    assert resultado.quantidade_indicadores_validos == 17
+    assert resultado.total_indicadores == 17
+
+    assert resultado.media_municipal_percentual == 50.0
+    assert resultado.diferenca_pontos_percentuais == 8.82
+
+    assert resultado.quantidade_pares_validos == 2
+    assert resultado.denominador_pares == 2
+    assert resultado.cobertura_pares_percentual == 100.0
+
+
+def test_media_municipal_simples_pesa_cada_escola_igualmente(
+    registro_factory,
+):
+    """A média é dos índices das escolas, não dos indicadores agrupados."""
+
+    escola = registro_factory(
+        15012345,
+        [1] * 17,
+        ano=2024,
+    )
+
+    referencia_zero = registro_factory(
+        15000001,
+        [0] * 17,
+        ano=2024,
+    )
+
+    # Apenas um indicador válido: índice de 100%.
+    referencia_cem_com_baixa_cobertura = registro_factory(
+        15000002,
+        [1] + [None] * 16,
+        ano=2024,
+    )
+
+    resultado = calcular_comparacao(
+        escola,
+        [referencia_zero, referencia_cem_com_baixa_cobertura],
+    )
+
+    # Média aritmética simples: (0 + 100) / 2 = 50%.
+    assert resultado.media_municipal_percentual == 50.0
+
+    # A escola selecionada tem índice de 100%.
+    assert resultado.indice_escola_percentual == 100.0
+
+    # Diferença expressa em pontos percentuais.
+    assert resultado.diferenca_pontos_percentuais == 50.0
+
+    assert resultado.quantidade_pares_validos == 2
+    assert resultado.denominador_pares == 2
+    assert resultado.cobertura_pares_percentual == 100.0
+
+
+def test_municipio_sem_outras_escolas(registro_factory):
+    """Sem referências, não há média nem diferença municipal."""
+
+    escola = registro_factory(
+        15012345,
+        [1] * 17,
+        ano=2024,
+    )
+
+    resultado = calcular_comparacao(escola, [])
+
+    assert resultado.situacao == "sem_pares_municipio"
+
+    assert resultado.indice_escola_percentual == 100.0
+
+    assert resultado.quantidade_pares_validos == 0
+    assert resultado.denominador_pares == 0
+
+    assert resultado.cobertura_pares_percentual is None
+    assert resultado.media_municipal_percentual is None
+    assert resultado.diferenca_pontos_percentuais is None
+
+
+def test_municipio_com_escolas_mas_sem_pares_validos(
+    registro_factory,
+):
+    """Referências existentes com todos os indicadores nulos
+    não podem produzir uma média municipal.
+    """
+
+    escola = registro_factory(
+        15012345,
+        [1] * 17,
+        ano=2024,
+    )
+
+    referencia_sem_dados_a = registro_factory(
+        15000001,
+        [None] * 17,
+        ano=2024,
+    )
+
+    referencia_sem_dados_b = registro_factory(
+        15000002,
+        [None] * 17,
+        ano=2024,
+    )
+
+    resultado = calcular_comparacao(
+        escola,
+        [referencia_sem_dados_a, referencia_sem_dados_b],
+    )
+
+    assert resultado.situacao == "sem_pares_validos"
+
+    assert resultado.indice_escola_percentual == 100.0
+
+    assert resultado.quantidade_pares_validos == 0
+    assert resultado.denominador_pares == 2
+    assert resultado.cobertura_pares_percentual == 0.0
+
+    assert resultado.media_municipal_percentual is None
+    assert resultado.diferenca_pontos_percentuais is None
+
+
+def test_escola_sem_dados_pode_ter_media_municipal_valida(
+    registro_factory,
+):
+    """O índice da escola pode ser nulo mesmo com pares válidos."""
+
+    escola = registro_factory(
+        15012345,
+        [None] * 17,
+        ano=2024,
+    )
+
+    referencia = registro_factory(
+        15000001,
+        [1] * 17,
+        ano=2024,
+    )
+
+    resultado = calcular_comparacao(escola, [referencia])
+
+    assert resultado.situacao == "escola_sem_dados"
+
+    assert resultado.indice_escola_percentual is None
+    assert resultado.diferenca_pontos_percentuais is None
+
+    # A média dos pares continua sendo calculável.
+    assert resultado.media_municipal_percentual == 100.0
+
+    assert resultado.quantidade_pares_validos == 1
+    assert resultado.denominador_pares == 1
+    assert resultado.cobertura_pares_percentual == 100.0
+
+
+def test_comparacao_com_uma_unica_referencia_valida(registro_factory):
+    """Uma única referência válida deve determinar a média municipal."""
+
+    escola = registro_factory(
+        15012345,
+        [1] * 10 + [0] * 7,
+        ano=2024,
+    )
+
+    referencia = registro_factory(
+        15000001,
+        [1] * 17,
+        ano=2024,
+    )
+
+    resultado = calcular_comparacao(escola, [referencia])
+
+    assert resultado.situacao == "disponivel"
+    assert resultado.indice_escola_percentual == 58.82
+    assert resultado.media_municipal_percentual == 100.0
+    assert resultado.diferenca_pontos_percentuais == -41.18
+    assert resultado.quantidade_pares_validos == 1
+    assert resultado.denominador_pares == 1
+    assert resultado.cobertura_pares_percentual == 100.0

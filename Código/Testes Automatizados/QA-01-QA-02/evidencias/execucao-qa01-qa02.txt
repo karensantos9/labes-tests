@@ -1,0 +1,27 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.12.2, pytest-9.1.1, pluggy-1.6.0 -- C:\Users\karen\Downloads\labes-api-extraido\labes-api-feature-SIE-30-school-municipality-analysis\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\karen\labes-tests
+plugins: anyio-4.13.0, asyncio-1.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 16 items
+
+C¾digo/Testes Automatizados/QA-01-QA-02/tests/test_qa02_comparacao.py::test_comparacao_exclui_escola_selecionada_e_filtra_referencias PASSED [  6%]
+C¾digo/Testes Automatizados/QA-01-QA-02/tests/test_qa02_comparacao.py::test_media_municipal_simples_pesa_cada_escola_igualmente PASSED [ 12%]
+C¾digo/Testes Automatizados/QA-01-QA-02/tests/test_qa02_comparacao.py::test_municipio_sem_outras_escolas PASSED [ 18%]
+C¾digo/Testes Automatizados/QA-01-QA-02/tests/test_qa02_comparacao.py::test_municipio_com_escolas_mas_sem_pares_validos PASSED [ 25%]
+C¾digo/Testes Automatizados/QA-01-QA-02/tests/test_qa02_comparacao.py::test_escola_sem_dados_pode_ter_media_municipal_valida PASSED [ 31%]
+C¾digo/Testes Automatizados/QA-01-QA-02/tests/test_qa02_comparacao.py::test_comparacao_com_uma_unica_referencia_valida PASSED [ 37%]
+C¾digo/Testes Automatizados/QA-01-QA-02/tests/test_qa02_indice.py::test_indice_registro_completo_com_17_indicadores PASSED [ 43%]
+C¾digo/Testes Automatizados/QA-01-QA-02/tests/test_qa02_indice.py::test_indice_registro_parcial_exclui_nulos PASSED [ 50%]
+C¾digo/Testes Automatizados/QA-01-QA-02/tests/test_qa02_indice.py::test_indice_sim_com_demais_indicadores_nulos PASSED [ 56%]
+C¾digo/Testes Automatizados/QA-01-QA-02/tests/test_qa02_indice.py::test_indice_nao_com_demais_indicadores_nulos PASSED [ 62%]
+C¾digo/Testes Automatizados/QA-01-QA-02/tests/test_qa02_indice.py::test_indice_todos_zero_e_valido PASSED [ 68%]
+C¾digo/Testes Automatizados/QA-01-QA-02/tests/test_qa02_indice.py::test_indice_todos_nulos_retorna_none PASSED [ 75%]
+C¾digo/Testes Automatizados/QA-01-QA-02/tests/test_qa02_indice.py::test_indicadores_ausentes_sao_tratados_como_nulos PASSED [ 81%]
+C¾digo/Testes Automatizados/QA-01-QA-02/tests/test_qa02_serie.py::test_dominio_ordena_registros_por_ano PASSED [ 87%]
+C¾digo/Testes Automatizados/QA-01-QA-02/tests/test_qa02_serie.py::test_servico_preserva_lacunas_e_registros_totalmente_nulos PASSED [ 93%]
+C¾digo/Testes Automatizados/QA-01-QA-02/tests/test_qa02_serie.py::test_servico_cria_quatro_pontos_sem_historico PASSED [100%]
+
+- generated xml file: C:\Users\karen\labes-tests\C¾digo\Testes Automatizados\QA-01-QA-02\evidencias\qa01-qa02-junit.xml -
+============================= 16 passed in 0.83s ==============================
