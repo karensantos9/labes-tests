@@ -1,4 +1,4 @@
-﻿
+
 """QA-02: testes independentes da série temporal."""
 
 import pytest
@@ -264,3 +264,93 @@ async def test_servico_cria_quatro_pontos_sem_historico(
         assert ponto["total_indicadores"] == 17
 
     assert repositorio.chamadas_pares == []
+
+
+
+@pytest.mark.asyncio
+async def test_servico_consulta_municipio_historico_de_cada_ano(
+    registro_factory,
+):
+    """Cada ano deve consultar os pares do município do registro daquele ano."""
+
+    escola_2022 = registro_factory(
+        15012345,
+        [1] * 17,
+        ano=2022,
+        co_municipio=1501402,
+        no_municipio="Belém",
+    )
+    escola_2024 = registro_factory(
+        15012345,
+        [1] * 17,
+        ano=2024,
+        co_municipio=1500800,
+        no_municipio="Ananindeua",
+    )
+
+    referencia_2022 = registro_factory(
+        15000001,
+        [0] * 17,
+        ano=2022,
+        co_municipio=1501402,
+        no_municipio="Belém",
+    )
+    referencia_2024 = registro_factory(
+        15000002,
+        [1] * 17,
+        ano=2024,
+        co_municipio=1500800,
+        no_municipio="Ananindeua",
+    )
+
+    # A identificação mais recente aponta para Ananindeua, mas o registro
+    # histórico de 2022 pertence a Belém.
+    identificacao_mais_recente = {
+        "co_entidade": 15012345,
+        "no_entidade": "Escola de teste QA",
+        "co_municipio": 1500800,
+        "no_municipio": "Ananindeua",
+    }
+
+    repositorio = RepositorioComparacaoFake(
+        identificacao=identificacao_mais_recente,
+        historico=[escola_2024, escola_2022],
+        pares={
+            (1501402, 2022): [referencia_2022],
+            (1500800, 2024): [referencia_2024],
+        },
+    )
+
+    servico = InfraestruturaService(repositorio)
+    envelope = await servico.build_comparacao_municipio(
+        co_entidade=15012345,
+    )
+
+    resposta = ComparacaoInfraestruturaResponse.model_validate(envelope)
+    serie = resposta.model_dump(mode="json")["data"]["serie"]
+
+    # As chamadas devem combinar município e ano do registro histórico.
+    consultas = {
+        (chamada["ano"], chamada["co_municipio"])
+        for chamada in repositorio.chamadas_pares
+    }
+    assert consultas == {
+        (2022, 1501402),
+        (2024, 1500800),
+    }
+    assert all(
+        chamada["co_entidade_excluida"] == 15012345
+        for chamada in repositorio.chamadas_pares
+    )
+
+    por_ano = {ponto["ano"]: ponto for ponto in serie}
+
+    # 2022 usa as referências de Belém: média de 0%.
+    assert por_ano[2022]["media_municipal_percentual"] == 0.0
+    assert por_ano[2022]["diferenca_pontos_percentuais"] == 100.0
+    assert por_ano[2022]["quantidade_pares_validos"] == 1
+
+    # 2024 usa as referências de Ananindeua: média de 100%.
+    assert por_ano[2024]["media_municipal_percentual"] == 100.0
+    assert por_ano[2024]["diferenca_pontos_percentuais"] == 0.0
+    assert por_ano[2024]["quantidade_pares_validos"] == 1

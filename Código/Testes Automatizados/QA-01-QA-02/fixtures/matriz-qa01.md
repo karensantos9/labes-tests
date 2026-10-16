@@ -204,6 +204,50 @@ Resultados esperados:
 - Índice da escola NULL nos quatro anos.
 - Média municipal e diferença NULL nos quatro anos, sem referências.
 
-## 5. Revisão da matriz
+## 5. Cenários de precisão e município histórico
+
+Os cenários QA01-15 e QA01-16 são fixtures matemáticas direcionadas para detectar arredondamento intermediário. Neles, a função recebe explicitamente os três primeiros indicadores esperados (`INDICADORES_ESPERADOS[:3]`) para produzir frações 2/3 e 1/3. Isso não altera o contrato geral do MVP, que continua definido por 17 indicadores.
+
+### QA01-15 — Diferença sem arredondamento intermediário
+
+Escola selecionada: valores dos três indicadores considerados: `[1, 1, 0]`; os outros 14 valores do registro são nulos e não fazem parte do conjunto de indicadores esperado deste cenário.
+
+- Índice exato da escola: 2/3 × 100 = 66,666…%.
+- Par municipal: `[1, 0, 0]` nos três indicadores considerados.
+- Índice exato do par: 1/3 × 100 = 33,333…%.
+- Diferença exata: (2/3 − 1/3) × 100 = 33,333… p.p.
+- **Diferença final esperada: 33,33 p.p.**
+- Não é correto calcular a diferença subtraindo os valores já arredondados (66,67 − 33,33 = 33,34 p.p.).
+
+### QA01-16 — Média municipal sem arredondamento intermediário
+
+Conjunto de indicadores considerados: os três primeiros indicadores do contrato, fornecidos explicitamente à função de cálculo.
+
+- Par A: `[0, 0, 0]`, índice de 0%.
+- Par B: `[1, 1, 0]`, índice exato de 2/3 × 100 = 66,666…%.
+- Média exata: (0 + 200/3) / 2 = 100/3 = 33,333…%.
+- **Média municipal final esperada: 33,33%.**
+- Não é correto arredondar os índices dos pares antes de calcular a média, pois isso pode produzir 33,34% em vez do resultado definido.
+
+### QA01-17 — Município histórico por ano
+
+A mesma escola (`co_entidade = 15012345`) possui registros em municípios diferentes ao longo da série:
+
+| Ano | Município do registro da escola | Código do município | Índice da escola | Índice da referência válida |
+|---|---|---:|---:|---:|
+| 2022 | Belém | 1501402 | 100% | 0% |
+| 2024 | Ananindeua | 1500800 | 100% | 100% |
+
+A identificação mais recente da escola pode indicar Ananindeua, mas isso não deve substituir o município associado ao registro histórico de 2022.
+
+Resultados esperados:
+
+- A consulta dos pares de 2022 deve usar `(ano=2022, co_municipio=1501402)`.
+- A consulta dos pares de 2024 deve usar `(ano=2024, co_municipio=1500800)`.
+- Em 2022: um par válido, média municipal de 0% e diferença de +100 p.p.
+- Em 2024: um par válido, média municipal de 100% e diferença de 0 p.p.
+- Os anos 2023 e 2025 continuam presentes na série histórica, mas não devem provocar consultas de pares baseadas em registros inexistentes da escola.
+
+## 6. Revisão da matriz
 
 Antes da entrega, conferir cada cenário contra os testes automatizados, registrar divergências e manter os resultados esperados independentes dos valores retornados pelo backend.
