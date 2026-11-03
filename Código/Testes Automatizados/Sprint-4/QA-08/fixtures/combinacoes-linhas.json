@@ -1,0 +1,49 @@
+{
+  "regra": "linhas_grafico = alvos_manuais + escolas_selecionadas_com_referencia_automatica",
+  "limite_alvos_manuais": 3,
+  "limite_linhas_grafico": 6,
+  "casos": [
+    {
+      "id": "3-municipios",
+      "escolas_manuais": 0,
+      "municipios_manuais": 3,
+      "alvos_manuais": 3,
+      "referencias_automaticas": 0,
+      "linhas_esperadas": 3
+    },
+    {
+      "id": "2-escolas-1-municipio",
+      "escolas_manuais": 2,
+      "municipios_manuais": 1,
+      "alvos_manuais": 3,
+      "referencias_automaticas": 2,
+      "linhas_esperadas": 5
+    },
+    {
+      "id": "1-escola-2-municipios",
+      "escolas_manuais": 1,
+      "municipios_manuais": 2,
+      "alvos_manuais": 3,
+      "referencias_automaticas": 1,
+      "linhas_esperadas": 4
+    },
+    {
+      "id": "3-escolas",
+      "escolas_manuais": 3,
+      "municipios_manuais": 0,
+      "alvos_manuais": 3,
+      "referencias_automaticas": 3,
+      "linhas_esperadas": 6
+    },
+    {
+      "id": "escola-e-municipio-mesmo-territorio",
+      "escolas_manuais": 1,
+      "municipios_manuais": 1,
+      "alvos_manuais": 2,
+      "referencias_automaticas": 1,
+      "linhas_esperadas": 3,
+      "series_municipais_distintas": 2,
+      "deduplicar": false
+    }
+  ]
+}
